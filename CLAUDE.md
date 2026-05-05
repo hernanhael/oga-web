@@ -4,12 +4,12 @@ Plataforma web interna para empleados del Poder Judicial de Tucumán. Acceso res
 
 ## Stack
 
-- **Framework**: Next.js 15 (App Router, TypeScript, `/src` dir)
-- **Base de datos**: PostgreSQL vía Supabase + Drizzle ORM
+- **Framework**: Next.js 16.2.4 (App Router, TypeScript, `/src` dir)
+- **Base de datos**: PostgreSQL — Neon (desarrollo) / Supabase (producción) + Drizzle ORM
 - **Auth**: Better Auth (roles, sesión en DB, sin OAuth)
 - **IA**: @anthropic-ai/sdk — Claude claude-sonnet-4-6 con vision para extracción de audiencias
 - **Tiempo real**: Supabase Realtime (WebSockets sobre CDC de Postgres)
-- **Estilos**: Tailwind CSS v4 + shadcn/ui (CSS variables, tema pastel)
+- **Estilos**: Tailwind CSS v4 + shadcn/ui 4.6 — usa `@base-ui/react` (NO Radix UI). `DropdownMenuTrigger` no soporta `asChild`.
 - **Calendario**: FullCalendar 6 (ResourceTimeGrid para salas)
 - **Organigrama**: react-d3-tree (árbol interactivo con nodos React)
 - **Contenido rico**: TipTap (editor + visor, JSON almacenado en DB)
@@ -21,11 +21,12 @@ Plataforma web interna para empleados del Poder Judicial de Tucumán. Acceso res
 ## Comandos
 
 ```bash
-npm run dev          # Servidor de desarrollo
-npm run build        # Build de producción
-npm run lint         # ESLint
-npx drizzle-kit push # Aplicar cambios de schema a la DB
-npx drizzle-kit studio # Explorador visual de la DB
+npm run dev                                        # Servidor de desarrollo
+npm run build                                      # Build de producción
+npm run lint                                       # ESLint
+npx drizzle-kit push                               # Aplicar cambios de schema a la DB
+npx drizzle-kit studio                             # Explorador visual de la DB
+npx tsx --env-file=.env.local src/scripts/seed.ts  # Seed inicial (juzgados + admin)
 ```
 
 ## Estructura
@@ -65,7 +66,7 @@ employee   → lectura total, reservas propias
 readonly   → solo lectura
 ```
 
-Middleware en `src/middleware.ts` protege todas las rutas bajo `(protected)/`.
+Protección de rutas en `src/proxy.ts` (Next.js 16 renombró middleware.ts → proxy.ts, export `proxy` en lugar de `middleware`).
 
 ## Juzgados y colores
 
@@ -80,8 +81,9 @@ Todos los colores son pastel. Usar en calendarios, tablero y organigrama para id
 
 ## Diseño
 
-- Tema claro: fondo papel viejo (`hsl(40 30% 97%)`), texto gris azulado oscuro
-- Tema oscuro: gris oscuro (`hsl(220 15% 12%)`), texto blanco cálido
+- Tema claro: fondo papel viejo (`oklch(0.971 0.011 90)`), texto gris azulado oscuro (`oklch(0.237 0.031 257)`)
+- Tema oscuro: gris oscuro (`oklch(0.143 0.021 257)`), texto blanco cálido (`oklch(0.945 0.008 91)`)
+- Colores en espacio OKLCH (mejor uniformidad perceptual que HSL)
 - Tailwind v4: configuración en `globals.css` (CSS custom properties), sin `tailwind.config.js`
 - Botones shadcn: fill pastel + `border-2 border-current` (borde pronunciado)
 - `next-themes` para toggle claro/oscuro sin flash
@@ -116,7 +118,7 @@ Ruta: `src/app/api/hearings/extract/route.ts`
 
 ## Roadmap
 
-1. **Fase 0** — Fundación: Next.js, Tailwind, shadcn, Better Auth, Drizzle, shell de la app
+1. ✅ **Fase 0** — Fundación: Next.js 16, Tailwind v4, shadcn, Better Auth, Drizzle, shell de la app
 2. **Fase 1** — Área 1: Noticias, comunicados, cumpleaños, Realtime
 3. **Fase 2** — Área 2: Organigrama react-d3-tree, perfiles, fotos
 4. **Fase 3** — Área 3a: Calendario FullCalendar, reservas, conflictos, Realtime

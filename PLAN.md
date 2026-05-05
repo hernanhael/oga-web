@@ -172,8 +172,8 @@ Transiciones suaves entre páginas, modales y paneles. El banner de cumpleaños 
 
 | Categoría | Tecnología | Versión |
 |-----------|-----------|---------|
-| Framework | Next.js App Router | 15.x |
-| Lenguaje | TypeScript | 6.x |
+| Framework | Next.js App Router | 16.2.x |
+| Lenguaje | TypeScript | 5.x |
 | Base de datos | PostgreSQL (Supabase) | — |
 | ORM | Drizzle ORM | 0.45.x |
 | Autenticación | Better Auth | 1.6.x |
@@ -377,22 +377,23 @@ oga-web/
 
 ## 9. Roadmap de Desarrollo
 
-### Fase 0 — Fundación *(1 semana)*
+### Fase 0 — Fundación ✅ *(completada 05/05/2026)*
 Estructura base con la que se sostiene todo lo demás.
 
-- [ ] Inicializar proyecto con `create-next-app` (TypeScript, App Router, `/src`)
-- [ ] Configurar Tailwind CSS v4 con variables CSS del tema pastel
-- [ ] Instalar y configurar shadcn/ui con variante de botón personalizada
-- [ ] Configurar `next-themes` (toggle claro/oscuro sin flash)
-- [ ] Crear proyecto en Supabase, configurar connection string
-- [ ] Definir schema completo en `src/lib/db/schema.ts` con Drizzle
-- [ ] Ejecutar primera migración
-- [ ] Configurar Better Auth (email+password, roles, adaptador Drizzle)
-- [ ] Construir página de login
-- [ ] Middleware de protección de rutas en `src/middleware.ts`
-- [ ] Construir shell de la app: sidebar de navegación, header con toggle de tema y bell de notificaciones
+- [x] Inicializar proyecto con `create-next-app` (TypeScript, App Router, `/src`)
+- [x] Configurar Tailwind CSS v4 con variables CSS del tema pastel (OKLCH)
+- [x] Instalar y configurar shadcn/ui 4.6 con variante de botón personalizada
+- [x] Configurar `next-themes` (toggle claro/oscuro sin flash)
+- [x] Crear proyecto en Supabase + base de datos Neon para desarrollo local
+- [x] Definir schema completo en `src/lib/db/schema.ts` con Drizzle (18 tablas)
+- [x] Ejecutar primera migración (`drizzle-kit push`)
+- [x] Seed inicial: 4 juzgados + usuario admin
+- [x] Configurar Better Auth (email+password, roles, adaptador Drizzle)
+- [x] Construir página de login
+- [x] Protección de rutas en `src/proxy.ts` (Next.js 16 usa proxy, no middleware)
+- [x] Construir shell de la app: sidebar de navegación, header con toggle de tema y bell de notificaciones
 
-**Entregable:** Un empleado puede hacer login y ver el shell de la app. Un admin puede crear usuarios desde un panel básico.
+**Entregable:** ✅ Login funcional con roles. Shell completo (sidebar + header). Repo en GitHub.
 
 ---
 
@@ -546,4 +547,4 @@ NODE_ENV=production
 
 ---
 
-*Documento generado el 01/05/2026.*
+*Documento generado el 01/05/2026. Última actualización: 05/05/2026 (Fase 0 completada).*
