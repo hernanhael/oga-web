@@ -397,18 +397,24 @@ Estructura base con la que se sostiene todo lo demás.
 
 ---
 
-### Fase 1 — Área 1: Noticias y Comunicados *(1 semana)*
+### Fase 1 — Área 1: Noticias y Comunicados ✅ *(completada 07/05/2026)*
 
-- [ ] CRUD completo de anuncios (editor TipTap para admins)
-- [ ] Feed de noticias con filtros por tipo (novedades, comunicados, eventos)
-- [ ] Anuncios fijados (pinned) al tope del feed
-- [ ] Sistema de cumpleaños:
-  - Server Component en `layout.tsx` consulta cumpleaños de hoy y mañana
-  - Banner animado (Framer Motion) visible en Área 1
-  - Inserta en tabla `notifications` para el historial del bell icon
-- [ ] Supabase Realtime: nuevo comunicado → todos los usuarios conectados lo ven sin recargar
+- [x] CRUD completo de anuncios con editor TipTap (admin/supervisor crean y editan; solo admin elimina)
+- [x] Feed filtrable por tipo: Todos / Novedades / Comunicados / Eventos / Cumpleaños
+- [x] Anuncios fijados (pinned) al tope del feed con indicador visual
+- [x] Vencimiento automático de anuncios (`expiresAt`)
+- [x] Sistema de cumpleaños:
+  - [x] `layout.tsx` consulta cumpleaños hoy/mañana con `EXTRACT(MONTH/DAY)` — fire-and-forget
+  - [x] Banner animado (Framer Motion, OKLCH) descartable en Área 1
+  - [x] Inserta en `notifications` con deduplicación (una vez por día por persona)
+- [x] Campana de notificaciones en el header: badge de no leídas, dropdown, marcar todo leído
+- [x] API routes: `GET /api/announcements`, `GET /api/notifications`, `PATCH /api/notifications/[id]`
+- [x] Supabase Realtime: `postgres_changes` → `invalidateQueries` (con guard para dev sin Supabase)
+- [x] Cliente Supabase nullable cuando `NEXT_PUBLIC_SUPABASE_URL` no está configurado
+- [x] Scripts de datos de prueba: `seed-announcements.ts`, `create-test-user.ts`
+- [x] Fix SSL: `sslmode=verify-full` en `DATABASE_URL`
 
-**Entregable:** Página de inicio funcional con feed de noticias, comunicados y alertas de cumpleaños en tiempo real.
+**Entregable:** ✅ Feed de anuncios funcional, TipTap editor/viewer, cumpleaños animados, campana de notificaciones, Realtime.
 
 ---
 
@@ -547,4 +553,4 @@ NODE_ENV=production
 
 ---
 
-*Documento generado el 01/05/2026. Última actualización: 05/05/2026 (Fase 0 completada).*
+*Documento generado el 01/05/2026. Última actualización: 07/05/2026 (Fase 1 completada).*

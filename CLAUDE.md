@@ -12,7 +12,7 @@ Plataforma web interna para empleados del Poder Judicial de Tucumán. Acceso res
 - **Estilos**: Tailwind CSS v4 + shadcn/ui 4.6 — usa `@base-ui/react` (NO Radix UI). `DropdownMenuTrigger` no soporta `asChild`.
 - **Calendario**: FullCalendar 6 (ResourceTimeGrid para salas)
 - **Organigrama**: react-d3-tree (árbol interactivo con nodos React)
-- **Contenido rico**: TipTap (editor + visor, JSON almacenado en DB)
+- **Contenido rico**: TipTap v3 (editor + visor, JSON almacenado en DB). Requiere `immediatelyRender: false` en SSR.
 - **PDF viewer**: @react-pdf-viewer (descarga deshabilitada, URLs firmadas)
 - **Estado UI**: Zustand; **Estado servidor**: TanStack Query
 - **Animaciones**: Framer Motion; **Toasts**: sonner
@@ -21,12 +21,14 @@ Plataforma web interna para empleados del Poder Judicial de Tucumán. Acceso res
 ## Comandos
 
 ```bash
-npm run dev                                        # Servidor de desarrollo
-npm run build                                      # Build de producción
-npm run lint                                       # ESLint
-npx drizzle-kit push                               # Aplicar cambios de schema a la DB
-npx drizzle-kit studio                             # Explorador visual de la DB
-npx tsx --env-file=.env.local src/scripts/seed.ts  # Seed inicial (juzgados + admin)
+npm run dev                                                    # Servidor de desarrollo
+npm run build                                                  # Build de producción
+npm run lint                                                   # ESLint
+npx drizzle-kit push                                           # Aplicar cambios de schema a la DB
+npx drizzle-kit studio                                         # Explorador visual de la DB
+npx tsx --env-file=.env.local src/scripts/seed.ts              # Seed inicial (juzgados + admin)
+npx tsx --env-file=.env.local src/scripts/seed-announcements.ts # Datos de prueba para Área 1
+npx tsx --env-file=.env.local src/scripts/create-test-user.ts  # Crea usuarios employee + supervisor
 ```
 
 ## Estructura
@@ -36,25 +38,52 @@ src/
   app/
     (auth)/login/
     (protected)/
-      layout.tsx          # Shell: sidebar, header, tema, Realtime, check cumpleaños
-      noticias/           # Área 1 — Novedades y comunicados
-      organigrama/        # Área 2 — Árbol de empleados
+      layout.tsx          # Shell: sidebar, header, tema, check cumpleaños (fire-and-forget)
+      noticias/
+        page.tsx          # Área 1 — SSR: fetch anuncios + cumpleaños → AnnouncementsFeed
+        actions.ts        # Server Actions: createAnnouncement, updateAnnouncement, deleteAnnouncement, togglePin
+      organigrama/        # Área 2 — Árbol de empleados (pendiente)
       agenda/
-        calendario/       # Área 3a — Reserva de salas
-        tablero/          # Área 3b — Tablero semanal (proyectable)
-      educacion/          # Área 4 — Docencia jurídica
-      procedimientos/     # Área 5 — Guías y quizzes
+        calendario/       # Área 3a — Reserva de salas (pendiente)
+        tablero/          # Área 3b — Tablero semanal proyectable (pendiente)
+      educacion/          # Área 4 — Docencia jurídica (pendiente)
+      procedimientos/     # Área 5 — Guías y quizzes (pendiente)
     api/
       auth/[...all]/      # Better Auth handler
-      hearings/extract/   # Claude vision: foto → JSON de audiencias
-  components/ui/          # shadcn (copiados al repo, no son dependencia)
+      announcements/      # GET /api/announcements?type=<tipo> — lista con filtro y expiración
+      notifications/
+        route.ts          # GET /api/notifications — últimas 30 del usuario
+        [id]/route.ts     # PATCH /api/notifications/[id] — marcar como leída
+      hearings/extract/   # Claude vision: foto → JSON de audiencias (pendiente)
+  components/
+    layout/
+      sidebar.tsx         # Navegación lateral
+      header.tsx          # Header con toggle de tema + NotificationBell + user menu
+      notification-bell.tsx # Campana con badge de no leídas, dropdown, marcar todo leído
+    noticias/
+      announcements-feed.tsx  # Feed client: tabs, Supabase Realtime, TanStack Query
+      announcement-card.tsx   # Card con TypeBadge + TiptapViewer + dropdown de acciones
+      announcement-dialog.tsx # Sheet lateral create/edit (react-hook-form + TipTap)
+      birthday-banner.tsx     # Banner animado Framer Motion (OKLCH, descartable)
+      tiptap-editor.tsx       # Editor TipTap con toolbar (bold, italic, h2, listas, cita)
+      tiptap-viewer.tsx       # Visor TipTap read-only (immediatelyRender: false)
+      type-badge.tsx          # Badge coloreado por tipo (news/authority/event/birthday)
+    ui/                   # shadcn (copiados al repo, no son dependencia)
+    providers.tsx         # QueryClientProvider + ThemeProvider + Toaster
   lib/
     db/schema.ts          # Drizzle schema — fuente de verdad del modelo de datos
     db/index.ts           # Conexión Drizzle
     auth.ts               # Configuración Better Auth + roles
-    supabase.ts           # Cliente Supabase (Realtime + Storage)
+    auth-client.ts        # Cliente Better Auth (browser)
+    supabase.ts           # Cliente Supabase — nullable si NEXT_PUBLIC_SUPABASE_URL no está configurado
     utils.ts              # cn() helper
-  stores/                 # Zustand stores (tema, filtros, sidebar)
+  stores/
+    ui-store.ts           # Zustand (tema, filtros, sidebar)
+  scripts/
+    seed.ts               # Seed inicial: 4 juzgados + admin
+    seed-announcements.ts # 9 anuncios de prueba para Área 1
+    create-test-user.ts   # Crea users employee y supervisor para testing
+  proxy.ts                # Middleware de Next.js 16 (protección de rutas por rol)
 ```
 
 ## Roles de usuario
@@ -88,9 +117,44 @@ Todos los colores son pastel. Usar en calendarios, tablero y organigrama para id
 - Botones shadcn: fill pastel + `border-2 border-current` (borde pronunciado)
 - `next-themes` para toggle claro/oscuro sin flash
 
-## Funcionalidades críticas
+## Patrones de implementación
 
-### Extracción de audiencias por IA (Área 3b)
+### Server Actions + TanStack Query
+- Las mutaciones usan Server Actions (`"use server"`) con revalidatePath
+- El fetch inicial es SSR (Server Component pasa `initialData` a TanStack Query)
+- El cliente refresca vía `queryClient.invalidateQueries` después de cada acción
+- Las API routes (`/api/*`) sirven para el queryFn de TanStack Query en el cliente
+
+### Supabase Realtime
+- El cliente Supabase (`src/lib/supabase.ts`) es **nullable**: si `NEXT_PUBLIC_SUPABASE_URL` no está configurado, devuelve `null` y el Realtime se omite silenciosamente
+- Las suscripciones siempre incluyen un guard: `if (!supabase) return;`
+- En el feed de anuncios: `postgres_changes` sobre `announcements` → `invalidateQueries`
+
+### TipTap v3
+- Siempre pasar `immediatelyRender: false` en `useEditor` para evitar hydration mismatch en SSR
+- El JSON de TipTap se almacena directamente en columnas `json` de Drizzle
+- `TiptapEditor` para create/edit, `TiptapViewer` para lectura (editable: false)
+- Estilos del contenido en `.tiptap-content` en `globals.css` (sin @tailwindcss/typography)
+
+### Cumpleaños
+- El layout protected hace el check con `EXTRACT(MONTH/DAY FROM birthdate)` en cada navegación
+- La creación de notificaciones es **fire-and-forget** (no bloquea el render del layout)
+- La page de `/noticias` hace su propia query de cumpleaños para el banner (independiente del layout)
+- Deduplicación: chequea si ya existe una notificación de tipo `birthday` con el mismo `relatedId` creada hoy
+
+## Funcionalidades críticas implementadas
+
+### Área 1 — Novedades y Comunicados ✅
+- Feed filtrable por tipo: Todos / Novedades / Comunicados / Eventos / Cumpleaños
+- CRUD completo: admin/supervisor pueden crear y editar; solo admin puede eliminar
+- Fijar anuncios (pinned): aparecen primero con ring visual
+- Vencimiento automático: anuncios con `expiresAt` pasado no aparecen en el feed
+- Editor TipTap con toolbar: negrita, cursiva, h2, listas, cita
+- Banner de cumpleaños animado (hoy + mañana) con Framer Motion y colores OKLCH
+- Campana de notificaciones: badge de no leídas, dropdown con historial, marcar todo leído
+- Realtime: Supabase CDC sobre tabla `announcements` → invalidación de cache automática
+
+### Extracción de audiencias por IA (Área 3b — pendiente)
 Ruta: `src/app/api/hearings/extract/route.ts`
 - Usuario sube foto de planilla papel
 - `browser-image-compression` comprime la imagen antes de enviar
@@ -99,18 +163,12 @@ Ruta: `src/app/api/hearings/extract/route.ts`
 - Zod valida la respuesta → UI de revisión → Server Action guarda en DB
 - El tablero proyectable vive en `/tablero` (layout sin chrome de navegación)
 
-### Cumpleaños
-- Check server-side en `(protected)/layout.tsx` en cada navegación
-- Consulta empleados con cumpleaños hoy y mañana
-- Banner animado (Framer Motion) en Área 1
-- Inserta en tabla `notifications` para el historial del bell icon
-
-### PDFs no descargables
+### PDFs no descargables (Área 4 — pendiente)
 - `@react-pdf-viewer/toolbar` con botón de descarga removido
 - Supabase Storage sirve con signed URLs que expiran en 1 hora
 - Interceptar `onContextMenu` y Ctrl+S en el contenedor del visor
 
-### Tablero proyectable
+### Tablero proyectable (Área 3b — pendiente)
 - Ruta `/tablero` con layout propio (sin sidebar ni header)
 - Texto grande, optimizado para verse desde lejos en pared
 - Fondo de cada audiencia = color pastel del juzgado correspondiente
@@ -119,10 +177,10 @@ Ruta: `src/app/api/hearings/extract/route.ts`
 ## Roadmap
 
 1. ✅ **Fase 0** — Fundación: Next.js 16, Tailwind v4, shadcn, Better Auth, Drizzle, shell de la app
-2. **Fase 1** — Área 1: Noticias, comunicados, cumpleaños, Realtime
-3. **Fase 2** — Área 2: Organigrama react-d3-tree, perfiles, fotos
-4. **Fase 3** — Área 3a: Calendario FullCalendar, reservas, conflictos, Realtime
+2. ✅ **Fase 1** — Área 1: Feed de anuncios, TipTap, cumpleaños, Realtime, campana de notificaciones
+3. **Fase 2** — Área 2: Organigrama react-d3-tree, perfiles, fotos, gestión de usuarios
+4. **Fase 3** — Área 3a: Calendario FullCalendar, reservas de salas, conflictos, Realtime
 5. **Fase 4** — Área 3b: Tablero IA, extracción Claude, vista proyectable
-6. **Fase 5** — Área 4: Docencia jurídica, TipTap, PDF viewer, búsqueda Postgres
+6. **Fase 5** — Área 4: Docencia jurídica, PDF viewer, búsqueda Postgres
 7. **Fase 6** — Área 5: Guías, atajos de teclado, quizzes
-8. **Fase 7** — Producción: notificaciones, búsqueda global, performance, deploy Vercel
+8. **Fase 7** — Producción: búsqueda global, performance, deploy Vercel

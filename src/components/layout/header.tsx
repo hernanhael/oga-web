@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Sun, Moon, Bell, Menu, LogOut, ChevronDown } from "lucide-react";
+import { Sun, Moon, Menu, LogOut, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { signOut } from "@/lib/auth-client";
 
 const roleLabel: Record<string, string> = {
@@ -53,7 +54,7 @@ export function Header({ user }: { user: HeaderUser }) {
         <Menu className="w-5 h-5" />
       </Button>
 
-      {/* Desktop: empty left side for breadcrumbs (Fase 7) */}
+      {/* Desktop: breadcrumbs placeholder */}
       <div className="hidden lg:block" />
 
       {/* Right actions */}
@@ -63,7 +64,7 @@ export function Header({ user }: { user: HeaderUser }) {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          aria-label="Toggle theme"
+          aria-label="Cambiar tema"
         >
           {resolvedTheme === "dark" ? (
             <Sun className="w-5 h-5" />
@@ -73,9 +74,7 @@ export function Header({ user }: { user: HeaderUser }) {
         </Button>
 
         {/* Notification bell */}
-        <Button variant="ghost" size="icon" aria-label="Notificaciones">
-          <Bell className="w-5 h-5" />
-        </Button>
+        <NotificationBell userId={user.id} />
 
         {/* User dropdown */}
         <DropdownMenu>
@@ -102,10 +101,11 @@ export function Header({ user }: { user: HeaderUser }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              variant="destructive"
               onClick={handleSignOut}
-              className="text-destructive cursor-pointer focus:text-destructive"
+              className="cursor-pointer"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut />
               Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
