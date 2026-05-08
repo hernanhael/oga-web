@@ -1,35 +1,68 @@
 import { cn } from "@/lib/utils";
+import { Newspaper, Volume2, CalendarDays, Gift } from "lucide-react";
 
 export type AnnouncementType = "news" | "authority" | "event" | "birthday";
 
-const typeConfig: Record<AnnouncementType, { label: string; className: string }> = {
+const typeConfig: Record<
+  AnnouncementType,
+  { label: string; icon: React.ElementType; style: React.CSSProperties; darkStyle?: React.CSSProperties }
+> = {
   news: {
     label: "Novedad",
-    className: "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-200",
+    icon: Newspaper,
+    style: {
+      background: "oklch(0.93 0.04 252)",
+      color: "oklch(0.38 0.13 252)",
+      borderColor: "oklch(0.80 0.07 252)",
+    },
   },
   authority: {
     label: "Comunicado",
-    className: "bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200",
+    icon: Volume2,
+    style: {
+      background: "oklch(0.95 0.05 70)",
+      color: "oklch(0.38 0.10 65)",
+      borderColor: "oklch(0.82 0.09 65)",
+    },
   },
   event: {
     label: "Evento",
-    className: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200",
+    icon: CalendarDays,
+    style: {
+      background: "oklch(0.93 0.04 155)",
+      color: "oklch(0.36 0.10 155)",
+      borderColor: "oklch(0.78 0.08 155)",
+    },
   },
   birthday: {
     label: "Cumpleaños",
-    className: "bg-pink-100 text-pink-900 dark:bg-pink-900/30 dark:text-pink-200",
+    icon: Gift,
+    style: {
+      background: "oklch(0.94 0.04 350)",
+      color: "oklch(0.42 0.13 350)",
+      borderColor: "oklch(0.80 0.09 350)",
+    },
   },
 };
 
-export function TypeBadge({ type }: { type: AnnouncementType }) {
+interface TypeBadgeProps {
+  type: AnnouncementType;
+  className?: string;
+}
+
+export function TypeBadge({ type, className }: TypeBadgeProps) {
   const config = typeConfig[type] ?? typeConfig.news;
+  const Icon = config.icon;
+
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-        config.className
+        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase",
+        className
       )}
+      style={config.style}
     >
+      <Icon className="w-3 h-3 shrink-0" />
       {config.label}
     </span>
   );

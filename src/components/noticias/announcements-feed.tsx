@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,11 +15,11 @@ import { deleteAnnouncement, togglePin } from "@/app/(protected)/noticias/action
 import type { AnnouncementRow } from "./announcement-card";
 
 const TABS = [
-  { value: "all", label: "Todos" },
-  { value: "news", label: "Novedades" },
+  { value: "all",       label: "Todos" },
+  { value: "news",      label: "Novedades" },
   { value: "authority", label: "Comunicados" },
-  { value: "event", label: "Eventos" },
-  { value: "birthday", label: "Cumpleaños" },
+  { value: "event",     label: "Eventos" },
+  { value: "birthday",  label: "Cumpleaños" },
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
@@ -28,6 +29,16 @@ async function fetchAnnouncements(type: string): Promise<AnnouncementRow[]> {
   if (!res.ok) throw new Error("Error al cargar anuncios");
   return res.json();
 }
+
+// Framer Motion variants
+const listVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 14 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+};
 
 interface AnnouncementsFeedProps {
   initialData: AnnouncementRow[];
@@ -59,21 +70,14 @@ export function AnnouncementsFeed({
     queryClient.invalidateQueries({ queryKey: ["announcements"] });
   }, [queryClient]);
 
-  // Supabase Realtime (optional — skipped if NEXT_PUBLIC_SUPABASE_URL not set)
+  // Supabase Realtime (optional)
   useEffect(() => {
     if (!supabase) return;
     const channel = supabase
       .channel("announcements-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "announcements" },
-        invalidate
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, invalidate)
       .subscribe();
-
-    return () => {
-      supabase!.removeChannel(channel);
-    };
+    return () => { supabase!.removeChannel(channel); };
   }, [invalidate]);
 
   const handleDelete = async (id: string) => {
@@ -115,36 +119,43 @@ export function AnnouncementsFeed({
   const canCreate = ["admin", "supervisor"].includes(userRole);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Birthday banner */}
       {(birthdayToday.length > 0 || birthdayTomorrow.length > 0) && (
         <BirthdayBanner today={birthdayToday} tomorrow={birthdayTomorrow} />
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-foreground">
-          Novedades y Comunicados
-        </h1>
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Novedades y Comunicados
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Información y anuncios del Poder Judicial de Tucumán
+          </p>
+        </div>
         {canCreate && (
-          <Button onClick={handleCreate} size="sm">
-            <Plus className="w-4 h-4 mr-1.5" />
+          <Button onClick={handleCreate} size="sm" className="shrink-0 mt-0.5">
+            <Plus className="w-4 h-4" />
             Nuevo anuncio
           </Button>
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center gap-1 flex-wrap">
+      {/* Filter tabs — segmented control */}
+      <div className="inline-flex items-center gap-0.5 bg-muted rounded-lg p-1">
         {TABS.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === tab.value
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            }`}
+            className={`
+              relative px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 outline-none
+              ${activeTab === tab.value
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+              }
+            `}
           >
             {tab.label}
           </button>
@@ -153,12 +164,10 @@ export function AnnouncementsFeed({
 
       {/* Feed */}
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="space-y-3 p-4 rounded-xl border border-border bg-card">
-              <div className="flex gap-2">
-                <Skeleton className="h-5 w-20 rounded-full" />
-              </div>
+            <div key={i} className="p-4 rounded-xl border border-border bg-card space-y-3">
+              <Skeleton className="h-4 w-24 rounded-md" />
               <Skeleton className="h-5 w-3/4" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-2/3" />
@@ -166,35 +175,56 @@ export function AnnouncementsFeed({
           ))}
         </div>
       ) : data.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-muted-foreground text-sm">
-            No hay anuncios en esta categoría.
-          </p>
-          {canCreate && (
-            <button
-              onClick={handleCreate}
-              className="mt-3 text-sm text-primary hover:underline"
-            >
-              Publicar el primero
-            </button>
-          )}
-        </div>
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="py-20 flex flex-col items-center gap-3 text-center"
+          >
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <FileText className="w-5 h-5 text-muted-foreground/60" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Sin anuncios en esta categoría
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {canCreate ? "Sé el primero en publicar algo." : "Volvé más tarde."}
+              </p>
+            </div>
+            {canCreate && (
+              <button
+                onClick={handleCreate}
+                className="text-sm text-primary hover:underline mt-1"
+              >
+                Publicar anuncio
+              </button>
+            )}
+          </motion.div>
+        </AnimatePresence>
       ) : (
-        <div className="space-y-4">
+        // key = activeTab forces remount → re-triggers stagger on tab change
+        <motion.div
+          key={activeTab}
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+          className="space-y-3"
+        >
           {data.map((announcement) => (
-            <AnnouncementCard
-              key={announcement.id}
-              announcement={announcement}
-              userRole={userRole}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onTogglePin={handleTogglePin}
-            />
+            <motion.div key={announcement.id} variants={itemVariants}>
+              <AnnouncementCard
+                announcement={announcement}
+                userRole={userRole}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onTogglePin={handleTogglePin}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
-      {/* Create / Edit dialog */}
       <AnnouncementDialog
         open={dialogOpen}
         onClose={handleDialogClose}
