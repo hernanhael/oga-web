@@ -113,6 +113,7 @@ Todos los colores son pastel. Usar en calendarios, tablero y organigrama para id
 - Tema claro: fondo papel viejo (`oklch(0.971 0.011 90)`), texto gris azulado oscuro (`oklch(0.237 0.031 257)`)
 - Tema oscuro: gris oscuro (`oklch(0.143 0.021 257)`), texto blanco cálido (`oklch(0.945 0.008 91)`)
 - Colores en espacio OKLCH (mejor uniformidad perceptual que HSL)
+- **Tipografía**: Montserrat (`next/font/google`, weights 400/500/600/700) — cargada en `layout.tsx` como `--font-geist-sans` (reutiliza la CSS var que Tailwind ya mapea a `font-sans`)
 - Tailwind v4: configuración en `globals.css` (CSS custom properties), sin `tailwind.config.js`
 - Botones shadcn: fill pastel + `border-2 border-current` (borde pronunciado)
 - `next-themes` para toggle claro/oscuro sin flash
@@ -147,12 +148,18 @@ Todos los colores son pastel. Usar en calendarios, tablero y organigrama para id
 ### Área 1 — Novedades y Comunicados ✅
 - Feed filtrable por tipo: Todos / Novedades / Comunicados / Eventos / Cumpleaños
 - CRUD completo: admin/supervisor pueden crear y editar; solo admin puede eliminar
-- Fijar anuncios (pinned): aparecen primero con ring visual
+- Fijar anuncios (pinned): aparecen primero con ribbon en esquina superior derecha
 - Vencimiento automático: anuncios con `expiresAt` pasado no aparecen en el feed
 - Editor TipTap con toolbar: negrita, cursiva, h2, listas, cita
 - Banner de cumpleaños animado (hoy + mañana) con Framer Motion y colores OKLCH
 - Campana de notificaciones: badge de no leídas, dropdown con historial, marcar todo leído
 - Realtime: Supabase CDC sobre tabla `announcements` → invalidación de cache automática
+
+**Pulido visual (07/05/2026):**
+- `type-badge`: icono por categoría (Newspaper/Volume2/CalendarDays/Gift) + OKLCH inline styles + borde + uppercase tracking
+- `announcement-card`: borde izquierdo coloreado por tipo (`border-l-[3px]` con OKLCH), hover lift (`hover:shadow-md hover:-translate-y-px`), ribbon de "Fijado" en top-right
+- `announcements-feed`: Framer Motion staggered list (stagger 0.07s, cubic bezier `[0.22,1,0.36,1]`), segmented control tabs, empty state mejorado
+- `sidebar`: indicador activo con `border-l-[3px] border-l-primary` + `rounded-r-md`, etiqueta de sección "Áreas", ícono coloreado según estado activo
 
 ### Extracción de audiencias por IA (Área 3b — pendiente)
 Ruta: `src/app/api/hearings/extract/route.ts`
@@ -177,7 +184,7 @@ Ruta: `src/app/api/hearings/extract/route.ts`
 ## Roadmap
 
 1. ✅ **Fase 0** — Fundación: Next.js 16, Tailwind v4, shadcn, Better Auth, Drizzle, shell de la app
-2. ✅ **Fase 1** — Área 1: Feed de anuncios, TipTap, cumpleaños, Realtime, campana de notificaciones
+2. ✅ **Fase 1** — Área 1: Feed de anuncios, TipTap, cumpleaños, Realtime, campana de notificaciones + pulido visual + Montserrat
 3. **Fase 2** — Área 2: Organigrama react-d3-tree, perfiles, fotos, gestión de usuarios
 4. **Fase 3** — Área 3a: Calendario FullCalendar, reservas de salas, conflictos, Realtime
 5. **Fase 4** — Área 3b: Tablero IA, extracción Claude, vista proyectable

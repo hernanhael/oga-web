@@ -110,13 +110,17 @@ Centro de capacitación interna.
 
 ## 3. Diseño Visual
 
+### Tipografía
+
+**Montserrat** (`next/font/google`, weights 400/500/600/700). Se carga en `layout.tsx` como variable CSS `--font-geist-sans`, que Tailwind ya mapea a `font-sans` — sin cambios adicionales en `globals.css`.
+
 ### Tema Claro / Oscuro
 La plataforma ofrece toggle entre modo claro y oscuro, persistido entre sesiones.
 
 | | Fondo | Texto |
 |--|-------|-------|
-| **Claro** | Blanco roto (como papel viejo, `hsl(40 30% 97%)`) | Gris azulado oscuro |
-| **Oscuro** | Gris muy oscuro (`hsl(220 15% 12%)`) | Blanco cálido |
+| **Claro** | Blanco roto (como papel viejo, `oklch(0.971 0.011 90)`) | Gris azulado oscuro (`oklch(0.237 0.031 257)`) |
+| **Oscuro** | Gris muy oscuro (`oklch(0.143 0.021 257)`) | Blanco cálido (`oklch(0.945 0.008 91)`) |
 
 ### Paleta de Colores
 Todos los colores de la interfaz son **pastel**: fondos, botones, etiquetas, títulos.
@@ -401,7 +405,7 @@ Estructura base con la que se sostiene todo lo demás.
 
 - [x] CRUD completo de anuncios con editor TipTap (admin/supervisor crean y editan; solo admin elimina)
 - [x] Feed filtrable por tipo: Todos / Novedades / Comunicados / Eventos / Cumpleaños
-- [x] Anuncios fijados (pinned) al tope del feed con indicador visual
+- [x] Anuncios fijados (pinned) al tope del feed con ribbon en esquina superior derecha
 - [x] Vencimiento automático de anuncios (`expiresAt`)
 - [x] Sistema de cumpleaños:
   - [x] `layout.tsx` consulta cumpleaños hoy/mañana con `EXTRACT(MONTH/DAY)` — fire-and-forget
@@ -413,8 +417,10 @@ Estructura base con la que se sostiene todo lo demás.
 - [x] Cliente Supabase nullable cuando `NEXT_PUBLIC_SUPABASE_URL` no está configurado
 - [x] Scripts de datos de prueba: `seed-announcements.ts`, `create-test-user.ts`
 - [x] Fix SSL: `sslmode=verify-full` en `DATABASE_URL`
+- [x] **Pulido visual**: borde izquierdo coloreado por tipo en cards, Framer Motion stagger en feed, segmented control tabs, type-badge con íconos por categoría, sidebar con `border-l-[3px]` en ítem activo
+- [x] **Tipografía**: Montserrat vía `next/font/google` (reemplaza Geist Sans)
 
-**Entregable:** ✅ Feed de anuncios funcional, TipTap editor/viewer, cumpleaños animados, campana de notificaciones, Realtime.
+**Entregable:** ✅ Feed de anuncios funcional, TipTap editor/viewer, cumpleaños animados, campana de notificaciones, Realtime, interfaz pulida con Montserrat.
 
 ---
 
@@ -553,4 +559,4 @@ NODE_ENV=production
 
 ---
 
-*Documento generado el 01/05/2026. Última actualización: 07/05/2026 (Fase 1 completada).*
+*Documento generado el 01/05/2026. Última actualización: 07/05/2026 (Fase 1 completada + pulido visual + Montserrat).*
